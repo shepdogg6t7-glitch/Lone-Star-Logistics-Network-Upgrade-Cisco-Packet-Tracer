@@ -9,12 +9,12 @@ This project simulates a network expansion for a fictional logistics company, Lo
 ## Files
 | File | Description |
 |---|---|
-| `Lone_Star_Logistics_Final Project_Shepherd.pkt` | Full Packet Tracer project file (topology, device configs, and simulation) |
+| `Kelvin_S_Project_Git_Hub.pkz` | Multi-user Packet Tracer project archive (topology, device configs, and simulation) |
 ## How to Open
-This project requires **Cisco Packet Tracer** (free with a Cisco Networking Academy account) — GitHub can't preview `.pkt` files directly.
+This project requires **Cisco Packet Tracer** (free with a Cisco Networking Academy account) — GitHub can't preview `.pkz` files directly.
 1. Download [Cisco Packet Tracer](https://www.netacad.com/courses/packet-tracer)
 2. Clone or download this repo
-3. Open the `.pkt` file in Packet Tracer to explore the topology, device configs, and run the simulation
+3. Open the `.pkz` file in Packet Tracer to explore the topology, device configs, and run the simulation
 ## Certification
 Completed as part of the Cisco Networking Academy "Getting Started with Cisco Packet Tracer" course.
 ![Cisco Networking Academy Certificate](certificate.png)
