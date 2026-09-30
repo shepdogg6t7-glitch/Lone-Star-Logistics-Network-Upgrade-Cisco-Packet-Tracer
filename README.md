@@ -1,71 +1,136 @@
-# Lone Star Logistics — 3-Site Network Build (Cisco Packet Tracer)
-Final exam project for **Getting Started with Cisco Packet Tracer** (Cisco Networking Academy). Grade: **A**.
+# Lone Star Logistics — Multi-Site Network Upgrade
 
-## Overview
-Designed, built, and troubleshot a 3-site hub-and-spoke network for a simulated logistics company: Austin Headquarters (hub), Round Rock Sales Office, and San Marcos Warehouse (spokes). Covers full interface addressing, static routing between all three sites, a real trouble-ticket diagnosis and fix, DHCP with cross-site relay, and OSPF as a dynamic routing backup — plus a written rebuild-from-scratch SOP and a set of protocol-behavior questions answered directly from Packet Tracer packet captures.
+A three-site hub-and-spoke network designed and configured in Cisco
+Packet Tracer. Built as a capstone project, then expanded with a
+**deliberate troubleshooting exercise** that simulates a real support
+ticket — including root-cause diagnosis and verification of the fix.
 
-## What's Configured
-- **Interface addressing** — every router interface addressed per a defined IPv4 plan (LAN subnets per site, dedicated WAN transit subnets between hub and each spoke)
-- **Static routing** — routes on all three routers so each spoke reaches HQ, HQ reaches both spokes, and — the easy-to-miss piece — each spoke reaches the *other* spoke's LAN and WAN transit subnet through HQ
-- **Trouble-ticket diagnosis** — methodically diagnosed a real connectivity fault (Sales and Warehouse couldn't reach each other) using `show ip route`, `ping`, and `traceroute`; isolated the root cause to a missing return route on each spoke's WAN transit subnet, then corrected it with two added static routes and verified a clean two-hop path in both directions
-- **DHCP** — centralized DHCP server at HQ with `ip helper-address` relay configured on both spoke routers' LAN interfaces, verified across all 8 client PCs
-- **OSPF (bonus)** — configured as a fully-converged dynamic routing backup alongside the static routes, with neighbor and link-state database verification on all three routers
-- **Protocol behavior analysis** — ARP resolution, the Layer 2 "hop-by-hop" MAC rewriting rule vs. unchanged Layer 3 addressing, TTL decrement per hop, and OSPF Hello/multicast behavior — each answered using an actual PDU capture from Packet Tracer's Simulation mode
+## The Scenario
 
-## Files
-| File | Description |
-|---|---|
-| `Kelvin_S_Project.pkz` | Multi-user Packet Tracer project archive (topology, device configs, and simulation) |
-| `Kelvin_S_Project.docx` | Full write-up: addressing plan, routing config, trouble-ticket diagnosis, DHCP, OSPF, and protocol-behavior Q&A with packet captures |
-| `Kelvin_Shepherd_SOP_Manual.docx` | Standard Operating Procedure: rebuild the entire network from an empty canvas, plus a troubleshooting table and Packet Tracer CLI quirks reference |
+Lone Star Logistics operates three sites across Central Texas:
 
-## How to Open
-This project requires **Cisco Packet Tracer** (free with a Cisco Networking Academy account) — GitHub can't preview `.pkz` files directly.
-1. Download [Cisco Packet Tracer](https://www.netacad.com/courses/packet-tracer)
-2. Clone or download this repo
-3. Open the `.pkz` file in Packet Tracer to explore the topology, device configs, and run the simulation
-4. Refer to `Kelvin_S_Project.docx` for the full write-up and `Kelvin_Shepherd_SOP_Manual.docx` for the rebuild procedure
+| Site | Role | LAN |
+|------|------|-----|
+| **Austin** | Headquarters (hub) | 192.168.10.0/24 |
+| **Round Rock** | Sales office (spoke) | 192.168.20.0/24 |
+| **San Marcos** | Warehouse (spoke) | 192.168.30.0/24 |
 
-## Network & Diagnosis Flow
+Both spoke sites connect only to Austin (single-homed). All traffic
+between Round Rock and San Marcos must transit Austin.
 
-```mermaid
-flowchart TD
-    A[Design 3-site topology<br/>Austin hub + 2 spokes] --> B[Address all interfaces<br/>per IPv4 plan]
-    B --> C[Configure static routing<br/>HQ + both spokes]
-    C --> D{Trouble ticket:<br/>Sales <-> Warehouse fails}
-    D --> E[show ip route / ping / traceroute<br/>on all 3 routers]
-    E --> F[Root cause: missing return route<br/>to other spoke's WAN transit subnet]
-    F --> G[Add 1 static route per spoke]
-    G --> H[Verify: clean 2-hop path<br/>both directions]
-    H --> I[Configure DHCP + relay<br/>across all sites]
-    I --> J[Configure OSPF as<br/>dynamic backup]
-    J --> K[Document: SOP manual<br/>+ protocol behavior Q&A]
-```
+![Network topology](screenshots/01-topology/topology.png)
 
-## Interview Prep: Sample Questions & Answers
+## What Was Built
 
-### Conceptual
-- Why does a hub-and-spoke network need a route from each spoke to the *other* spoke's transit subnet, not just to HQ?
-- What's the difference between static and dynamic (OSPF) routing, and why configure both on the same network?
-- Why does `show ip route ospf` return nothing even when OSPF is fully converged and working?
-- What is `ip helper-address` for, and why do DHCP client broadcasts need it to cross a router hop?
-- Explain the "hop-by-hop" addressing rule: what stays the same and what changes at every router?
+| Area | Detail |
+|------|--------|
+| **Addressing** | 5 subnets across 7 router interfaces |
+| **Static routing** | Full reachability between all three LANs |
+| **DHCP** | Centralized server at HQ + `ip helper-address` relay on both spokes |
+| **Bonus: OSPF** | Area 0 enabled alongside static routes as a self-healing backup |
+| **Troubleshooting** | Diagnosed and corrected a broken spoke-to-spoke path |
 
-### Practical
-- Walk me through how you'd diagnose two sites on the same network that can reach a shared hub but not each other.
-- How would you verify OSPF is actually functioning if the routing table shows no OSPF-learned routes?
-- A DHCP client comes back with a `0.0.0.0` gateway — what would you check first?
-- How would you confirm a WAN link that shows `down/down` is a cabling issue rather than a config issue?
+## The Troubleshooting Story
 
-### Behavioral
+The project includes a **deliberately broken** network state. A junior
+technician's prior configuration left three symptoms:
 
-**Q: Tell me about a time you diagnosed a network problem systematically rather than guessing.**
+1. HQ could reach the Warehouse but not Sales
+2. Sales could not reach the Warehouse
+3. Warehouse could reach HQ but could not send print jobs to Sales
 
-- **Situation:** In a trouble-ticket scenario, a junior technician's prior configuration left three symptoms: HQ could reach the Warehouse but not Sales; Sales couldn't reach the Warehouse; and the Warehouse could reach HQ but couldn't send print jobs to Sales.
-- **Task:** Find the actual root cause across three routers and fix it without breaking anything that was already working.
-- **Action:** I worked methodically instead of guessing — confirmed every interface was correctly addressed and up, then compared each router's routing table against what full reachability required. Ping and traceroute from the spokes showed traffic reaching the hub but failing at the second hop. I ran an extended ping sourced from the hub's own spoke-facing interface to isolate whether the fault was on the outbound or return path, which pointed to the return path specifically.
-- **Result:** Root cause was a missing static route on each spoke back to the *other* spoke's WAN transit subnet — traffic sent directly from a router's own WAN interface used that transit subnet as its source, and with no return route, replies were silently dropped. Added one static route per spoke, then verified a clean two-hop path in both directions with ping and traceroute. The bigger takeaway: isolating outbound vs. return path early narrows a multi-symptom problem fast, instead of treating three symptoms as three separate problems.
+**All three symptoms turned out to be the same root cause:** the spoke
+routers were missing routes to the *other spoke's WAN transit subnet*.
+Router-originated traffic uses its source interface's subnet as its
+source IP — with no route back to that subnet, replies were silently
+dropped.
+
+**Fix:** two static routes — one on each spoke.
+
+**The interesting part isn't the fix — it's the diagnostic method:**
+
+- Rule out physical/interface problems with `show ip interface brief`
+- Compare routing tables against requirements
+- Use `traceroute` to see where the packet dies
+- **Use extended ping sourced from a specific interface** to isolate
+  whether the fault is outbound or return path
+
+That last step is the trick most people miss. Full writeup in
+[04-troubleshooting.md](docs/04-troubleshooting.md).
+
+## Project Structure
+
+### Documentation
+
+| # | Doc | Covers |
+|---|-----|--------|
+| 01 | [Topology](docs/01-topology.md) | Sites, subnets, design rationale |
+| 02 | [Addressing](docs/02-addressing.md) | Interface IP plan and verification |
+| 03 | [Static Routing](docs/03-static-routing.md) | Route requirements and configuration |
+| 04 | [Troubleshooting](docs/04-troubleshooting.md) | **The broken-path diagnosis (start here if short on time)** |
+| 05 | [DHCP](docs/05-dhcp.md) | Scopes, relay, and the `serverPool` pitfall |
+| 06 | [OSPF Bonus](docs/06-ospf-bonus.md) | Dynamic routing + administrative distance |
+| 07 | [Analysis Questions](docs/07-analysis-questions.md) | ARP, Layer 2 vs 3, OSPF protocol deep-dive |
+| 08 | [Interview Prep](docs/08-interview-prep.md) | Conceptual, practical, and behavioral Q&A |
+
+### Files
+
+- **`packet-tracer/Kelvin_S_Project.pkz`** — full topology (open in Cisco Packet Tracer)
+- **`sop/Kelvin_Shepherd_SOP_Manual.docx`** — standard operating procedures
+- **`Kelvin_S_Project.docx`** — original project writeup
+- **`screenshots/`** — 16 curated screenshots organized by topic
+
+## Verification Evidence
+
+Every claim in the docs is backed by a screenshot. Key evidence:
+
+**Cross-branch reachability (the fix, confirmed):**
+
+![Sales PC to Warehouse PC](screenshots/04-troubleshooting/sales-pc-to-warehouse-pc.png)
+
+**Routing tables on all three routers:**
+
+- [ATX-R](screenshots/03-routing/atx-r-show-ip-route.png)
+- [RR-R](screenshots/03-routing/rr-r-show-ip-route.png)
+- [SM-R](screenshots/03-routing/sm-r-show-ip-route.png)
+
+**DHCP scopes and relay:**
+
+- [DHCP configuration](screenshots/05-dhcp/dhcp-scopes.png)
+- [DHCP server IP](screenshots/05-dhcp/dhcp-server-ip.png)
+
+## What I Learned
+
+- **Static routes must exist in both directions.** A one-way route
+  produces traffic that arrives but never returns.
+- **Router-originated traffic uses the source interface's subnet.** A
+  route to the destination LAN is not enough if the destination router
+  can't route back to your WAN transit subnet.
+- **Extended ping sourced from a specific interface** is the single
+  most useful diagnostic for asymmetric routing problems.
+- **`traceroute` shows you where the packet dies** — hop 1 responding
+  but hop 2 timing out is a strong clue about which direction is broken.
+- **DHCP broadcasts need relay** to cross router boundaries. There's no
+  way around `ip helper-address` if the client and server are on
+  different subnets.
+- **Administrative distance decides between routing sources.** OSPF and
+  static routes can coexist; the lower AD wins the forwarding decision.
+- **Multiple symptoms can be one root cause.** Treating each symptom as
+  a separate problem wastes time — look for what they have in common.
 
 ## Certification
-Completed as part of the Cisco Networking Academy "Getting Started with Cisco Packet Tracer" course.
-![Cisco Networking Academy Certificate](certificate.png)
+
+Completed as part of the **Cisco Networking Academy "Getting Started
+with Cisco Packet Tracer"** course.
+
+![Certificate](screenshots/certificate.png)
+
+## Contact
+
+- GitHub: [@shepdogg6t7-glitch](https://github.com/shepdogg6t7-glitch)
+- Portfolio: [wazuh-home-lab](https://github.com/shepdogg6t7-glitch/wazuh-home-lab) — companion security operations lab
+
+---
+
+*Built in Cisco Packet Tracer. All screenshots and configurations
+included in this repository.*
